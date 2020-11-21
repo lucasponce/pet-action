@@ -1436,8 +1436,8 @@ function run() {
             client.issues.listForRepo({
                 owner: github.context.repo.owner,
                 repo: github.context.repo.repo,
-            }).then(issues => {
-                console.log(JSON.stringify(issues));
+            }).then(response => {
+                console.log(JSON.stringify(response.data));
             });
         }
         catch (error) {
