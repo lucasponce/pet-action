@@ -4,15 +4,17 @@ import * as github from "@actions/github";
 async function run() {
     try {
         const token = core.getInput("TOKEN", { required: true });
+        const epic = core.getInput("EPIC_LABEL");
+        const subepic = core.getInput("SUBEPIC_LABEL");
         const client = github.getOctokit(token);
-        console.log('token: ' + token);
-        console.log('owner: ' + github.context.repo.owner);
-        console.log('repo: ' + github.context.repo.repo);
         client.issues.listForRepo({
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
+            labels: epic + ',' + subepic,
         }).then(response => {
-            console.log(JSON.stringify(response.data));
+            response.data.forEach(issue => {
+                console.log('issue #' + issue.number + ' - ' + issue.title);
+            });
         });
     } catch (error) {
         core.error(error);
