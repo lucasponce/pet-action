@@ -1,5 +1,6 @@
-on: [push]
-
+on:
+  issues:
+    types: [opened, edited, deleted, closed, reopened, labeled]
 jobs:
   hello_world_job:
     runs-on: ubuntu-latest
