@@ -2,17 +2,15 @@ on:
   issues:
     types: [opened, edited, deleted, closed, reopened, labeled]
 jobs:
-  hello_world_job:
+  sync-epic-job:
     runs-on: ubuntu-latest
-    name: A job to say hello
+    name: Sync epic issues with subtasks issues
     steps:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Hello world action step
-        id: hello
+        id: sync-epic
         uses: ./
         with:
-          who-to-greet: 'Keta the Greyhound'
-      # Use the output from the `hello` step
-      - name: Get the output time
-        run: echo "The time was ${{ steps.hello.outputs.time }}"
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}

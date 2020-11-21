@@ -1,10 +1,18 @@
-name: 'Hello World'
-description: 'Greet someone and record the time'
+name: 'Pet Action'
+description: 'Sync epics with subtasks using parent-child links. Inspired from https://github.com/ribtoks/parent-issue-update '
 inputs:
-  who-to-greet:  # id of input
-    description: 'Who to greet'
-    required: true
-    default: 'World'
+  TOKEN:
+    description: "Github token"
+    default: ""
+  REPO:
+    description: "Github repository"
+    default: ""
+  EPIC_LABEL:
+    description: "Label used for epic issues"
+    default: "epic"
+  SUBEPIC_LABEL:
+    description: "Label used for subepic issues"
+    default: "epic subtask"
 outputs:
   time: # id of output
     description: 'The time we greeted you'
