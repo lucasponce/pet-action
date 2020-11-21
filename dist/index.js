@@ -1433,11 +1433,12 @@ function run() {
             console.log('token: ' + token);
             console.log('owner: ' + github.context.repo.owner);
             console.log('repo: ' + github.context.repo.repo);
-            const issues = client.issues.listForRepo({
+            client.issues.listForRepo({
                 owner: github.context.repo.owner,
                 repo: github.context.repo.repo,
+            }).then(issues => {
+                console.log(JSON.stringify(issues));
             });
-            console.log(JSON.stringify(issues));
         }
         catch (error) {
             core.error(error);
