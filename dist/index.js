@@ -1429,13 +1429,13 @@ function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const token = core.getInput("TOKEN", { required: true });
-            const epic = core.getInput("EPIC_LABEL");
-            const subepic = core.getInput("SUBEPIC_LABEL");
-            const client = github.getOctokit(token);
-            client.issues.listForRepo({
+            const epicLabel = core.getInput("EPIC_LABEL");
+            const subepicLabel = core.getInput("SUBEPIC_LABEL");
+            const octokit = github.getOctokit(token);
+            octokit.issues.listForRepo({
                 owner: github.context.repo.owner,
                 repo: github.context.repo.repo,
-                labels: epic,
+                state: 'closed',
             }).then(response => {
                 response.data.forEach(issue => {
                     console.log('issue #' + issue.number + ' - ' + issue.title);
