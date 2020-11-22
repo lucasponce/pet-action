@@ -22,6 +22,7 @@ async function run() {
         const { data: subtaskIssues } = await octokit.issues.listForRepo({
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
+            state: 'all',
             labels: SUBTASK,
             direction: 'asc',
         });

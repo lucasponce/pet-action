@@ -1444,6 +1444,7 @@ function run() {
             const { data: subtaskIssues } = yield octokit.issues.listForRepo({
                 owner: github.context.repo.owner,
                 repo: github.context.repo.repo,
+                state: 'all',
                 labels: SUBTASK,
                 direction: 'asc',
             });
