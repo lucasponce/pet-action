@@ -1435,6 +1435,7 @@ function run() {
             client.issues.listForRepo({
                 owner: github.context.repo.owner,
                 repo: github.context.repo.repo,
+                labels: epic,
             }).then(response => {
                 response.data.forEach(issue => {
                     console.log('issue #' + issue.number + ' - ' + issue.title);
