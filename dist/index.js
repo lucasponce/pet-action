@@ -1432,16 +1432,23 @@ function run() {
             const epicLabel = core.getInput("EPIC_LABEL");
             const subepicLabel = core.getInput("SUBEPIC_LABEL");
             const octokit = github.getOctokit(token);
-            console.log('epicLabel: ' + epicLabel);
-            console.log('subepicLabel: ' + subepicLabel);
-            octokit.issues.listForRepo({
+            console.log('Fetching Epic issues with label [' + epicLabel + ']');
+            const { data: epicIssues } = yield octokit.issues.listForRepo({
                 owner: github.context.repo.owner,
                 repo: github.context.repo.repo,
-                labels: 'epic',
-            }).then(response => {
-                response.data.forEach(issue => {
-                    console.log('issue #' + issue.number + ' - ' + issue.title);
-                });
+                labels: epicLabel,
+            });
+            epicIssues.forEach(issue => {
+                console.log('Epic #' + issue.number + ' - ' + issue.title);
+            });
+            console.log('Fetching Subepic issues with label [' + subepicLabel + ']');
+            const { data: subepicIssues } = yield octokit.issues.listForRepo({
+                owner: github.context.repo.owner,
+                repo: github.context.repo.repo,
+                labels: subepicLabel,
+            });
+            subepicIssues.forEach(issue => {
+                console.log('Epic #' + issue.number + ' - ' + issue.title);
             });
         }
         catch (error) {
