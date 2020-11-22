@@ -1437,7 +1437,7 @@ function run() {
             octokit.issues.listForRepo({
                 owner: github.context.repo.owner,
                 repo: github.context.repo.repo,
-                labels: 'epic,subtask',
+                labels: 'epic',
             }).then(response => {
                 response.data.forEach(issue => {
                     console.log('issue #' + issue.number + ' - ' + issue.title);
