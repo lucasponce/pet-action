@@ -14,7 +14,7 @@ async function run() {
         octokit.issues.listForRepo({
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
-            labels: 'epic',
+            labels: 'epic,epic%20subtask',
         }).then(response => {
             response.data.forEach(issue => {
                 console.log('issue #' + issue.number + ' - ' + issue.title);
