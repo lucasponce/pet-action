@@ -1425,31 +1425,61 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(__webpack_require__(186));
 const github = __importStar(__webpack_require__(438));
+const issues_1 = __webpack_require__(962);
+const EPIC = 'epic';
+const SUBTASK = 'subtask';
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const token = core.getInput("TOKEN", { required: true });
-            const epicLabel = core.getInput("EPIC_LABEL");
-            const subepicLabel = core.getInput("SUBEPIC_LABEL");
             const octokit = github.getOctokit(token);
-            console.log('Fetching Epic issues with label [' + epicLabel + ']');
+            console.log(`Fetching Epic issues with label [${EPIC}]`);
             const { data: epicIssues } = yield octokit.issues.listForRepo({
                 owner: github.context.repo.owner,
                 repo: github.context.repo.repo,
-                labels: epicLabel,
+                labels: EPIC,
+                direction: 'asc',
             });
-            epicIssues.forEach(issue => {
-                console.log('Epic #' + issue.number + ' - ' + issue.title);
-            });
-            console.log('Fetching Subepic issues with label [' + subepicLabel + ']');
-            const { data: subepicIssues } = yield octokit.issues.listForRepo({
+            console.log(`Fetching Subtask issues with label [${SUBTASK}]`);
+            const { data: subtaskIssues } = yield octokit.issues.listForRepo({
                 owner: github.context.repo.owner,
                 repo: github.context.repo.repo,
-                labels: subepicLabel,
+                labels: SUBTASK,
+                direction: 'asc',
             });
-            subepicIssues.forEach(issue => {
-                console.log('Epic #' + issue.number + ' - ' + issue.title);
-            });
+            const epics = epicIssues.map(ei => ({
+                number: ei.number,
+                title: ei.title,
+                body: ei.body,
+                state: ei.state,
+                subtasks: [],
+            }));
+            const subtasks = subtaskIssues.map(si => ({
+                number: si.number,
+                title: si.title,
+                body: si.body,
+                state: si.state,
+                parent: issues_1.parseParent(si.body),
+            }));
+            const updated = issues_1.updateEpics(epics, subtasks);
+            if (updated.length > 0) {
+                console.log('Updating Epics');
+                updated.forEach(eu => {
+                    octokit.issues.update({
+                        owner: github.context.repo.owner,
+                        repo: github.context.repo.repo,
+                        issue_number: eu.number,
+                        body: eu.body,
+                    }).then(response => {
+                        console.log(`Updated Epic #${response.data.number} ${response.data.title}`);
+                    }).catch(error => {
+                        console.log(`Error Updating Epic #${eu.number}: ${error}`);
+                    });
+                });
+            }
+            else {
+                console.log('No Epic updates');
+            }
         }
         catch (error) {
             core.error(error);
@@ -6051,6 +6081,109 @@ function wrappy (fn, cb) {
     return ret
   }
 }
+
+
+/***/ }),
+
+/***/ 962:
+/***/ (function(__unusedmodule, exports) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.updateEpics = exports.updateBodySubtasks = exports.equalRefs = exports.parseParent = exports.parseNumberSubtasks = exports.parseBodySubtasks = void 0;
+const SUBTASKS = '## Subtasks';
+const TASK_REGEX = /^-\ \[([\ |x])\](.*)#([0-9]+)$/;
+const EPIC_REGEX = /^Epic\ +#([0-9]+)$/;
+function parseBodySubtasks(body) {
+    const i = body.indexOf(SUBTASKS);
+    if (i > -1) {
+        const rawLines = body.substring(i).split('\n');
+        const lines = rawLines.filter(rl => rl.startsWith('- '));
+        const refs = lines.map(l => l.trim().match(TASK_REGEX)).filter(m => m !== null).map(r => ({
+            number: new Number(r[3]).valueOf(),
+            title: r[2].trim(),
+            state: r[1] === 'x' ? 'closed' : 'open',
+        }));
+        return refs;
+    }
+    return [];
+}
+exports.parseBodySubtasks = parseBodySubtasks;
+function parseNumberSubtasks(number, subtasks) {
+    return subtasks.filter(s => s.parent === number).map(t => ({
+        number: t.number,
+        title: t.title,
+        state: t.state,
+    }));
+}
+exports.parseNumberSubtasks = parseNumberSubtasks;
+function parseParent(body) {
+    const rawLines = body.split('\n');
+    for (let i = 0; i < rawLines.length; i++) {
+        const r = rawLines[i].trim().match(EPIC_REGEX);
+        if (r) {
+            return new Number(r[1]).valueOf();
+        }
+    }
+    return undefined;
+}
+exports.parseParent = parseParent;
+function equalRefs(r1, r2) {
+    if (r1.length !== r2.length) {
+        return false;
+    }
+    for (let i = 0; i < r1.length; i++) {
+        const ri1 = r1[i];
+        const ri2 = r2[i];
+        if (ri1.number !== ri2.number || ri1.state !== ri2.state || ri1.title !== ri2.title) {
+            return false;
+        }
+    }
+    return true;
+}
+exports.equalRefs = equalRefs;
+function updateBodySubtasks(body, refs) {
+    const i = body.indexOf(SUBTASKS);
+    let presubtasks = body;
+    let postsubtasks = '';
+    if (i > -1) {
+        let j = SUBTASKS.length + 1;
+        const rawLines = body.substring(i).split('\n');
+        for (let k = 0; k < rawLines.length; k++) {
+            if (rawLines[k].startsWith('- ')) {
+                j = j + rawLines[k].length + 1;
+            }
+        }
+        presubtasks = body.substring(0, i);
+        postsubtasks = body.substring(i + j);
+    }
+    let subtasks = '';
+    if (refs.length > 0) {
+        subtasks = SUBTASKS + '\n';
+        for (let h = 0; h < refs.length; h++) {
+            const ref = '- [' + (refs[h].state === 'closed' ? 'x' : ' ') + '] ' + refs[h].title + ' #' + refs[h].number + '\n';
+            subtasks = subtasks + ref;
+        }
+    }
+    return presubtasks + subtasks + postsubtasks;
+}
+exports.updateBodySubtasks = updateBodySubtasks;
+function updateEpics(epics, subtasks) {
+    const updated = [];
+    for (let i = 0; i < epics.length; i++) {
+        const epic = epics[i];
+        const oldRefs = parseBodySubtasks(epic.body);
+        const newRefs = parseNumberSubtasks(epic.number, subtasks);
+        if (!equalRefs(oldRefs, newRefs)) {
+            const updatedEpic = Object.assign({}, epic);
+            updatedEpic.body = updateBodySubtasks(updatedEpic.body, newRefs);
+            updated.push(updatedEpic);
+        }
+    }
+    return updated;
+}
+exports.updateEpics = updateEpics;
 
 
 /***/ })
