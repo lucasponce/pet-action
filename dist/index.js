@@ -1432,6 +1432,8 @@ function run() {
             const epicLabel = core.getInput("EPIC_LABEL");
             const subepicLabel = core.getInput("SUBEPIC_LABEL");
             const octokit = github.getOctokit(token);
+            console.log('epicLabel: ' + epicLabel);
+            console.log('subepicLabel: ' + subepicLabel);
             octokit.issues.listForRepo({
                 owner: github.context.repo.owner,
                 repo: github.context.repo.repo,
