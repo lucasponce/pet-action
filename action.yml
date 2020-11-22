@@ -9,7 +9,7 @@ inputs:
     default: "epic"
   SUBEPIC_LABEL:
     description: "Label used for subepic issues"
-    default: "epic-subtask"
+    default: "subtask"
 outputs:
   time: # id of output
     description: 'The time we greeted you'
